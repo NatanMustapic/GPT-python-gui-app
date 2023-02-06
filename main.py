@@ -1,6 +1,7 @@
 import openai
 import constants
 
+
 #Importing tkinter
 import tkinter as tk
 from tkinter import ttk
@@ -24,8 +25,9 @@ class MyGUI:
 
         self.root = root
         self.root.title("ChatGPT")
-        self.root.geometry("1000x1200")
+        self.root.geometry("1000x1250")
         self.root.config(background=BG_COLOR)
+        self.root.resizable(True, False)
 
         # functions for main window
 
@@ -36,13 +38,20 @@ class MyGUI:
             prompt = e.get()
             print(prompt)
 
-            
+            response = str(printGeneratedText(generateResponse("Croatian: " + prompt, getModel())))
+            copyLastResponse(response)
+
             txt.insert(tk.END, "Human: " + prompt + "\n")
-            txt.insert(tk.END, "AI Response:" + str(printGeneratedText(generateResponse(prompt, getModel()))) + "\n")
+            txt.insert(tk.END, "AI Response:" + response + "\n")
             txt.insert(tk.END, "----------------------------------" + "\n")
             e.delete(0, tk.END)
 
             return prompt
+        
+        #copy last response or copy every response and write in a label if it's successful and button checks what is saved?
+
+        def copyLastResponse(response):
+            print(response)
 
         #All widgets
         
@@ -73,10 +82,15 @@ class MyGUI:
         frameControlBtn=tk.Frame(self.root,width=1000,height=20,bg='green')
         frameControlBtn.pack(side="left")
 
+        #get API button
         apiKeyBtn=tk.Button(frameControlBtn,text='API KEY', command=self.getAPI)
         apiKeyBtn.pack(side='left')
-        copyResponseBtn = tk.Button(frameControlBtn, text="Copy Response")
+        #copy Response button
+        copyResponseBtn = tk.Button(frameControlBtn, text="Copy Response", command=copyLastResponse)
         copyResponseBtn.pack(side="right")
+        #some kind of slider for temperature, top-p and token values
+
+        #differnet language options?
 
     
     # functions for api window - does not work!!!
@@ -119,7 +133,6 @@ class MyGUI:
 # Set the API key for your OpenAI account
 openai.api_key = constants.API_KEY
 
-
 # Use the completions API to generate text from GPT-3
 def generateResponse(prompt, model):
     response = openai.Completion.create(
@@ -132,7 +145,7 @@ def generateResponse(prompt, model):
 
 # Print the generated text
 def printGeneratedText(response):
-    print(response["choices"][0]["text"]+"\n")
+    print()
     return response["choices"][0]["text"]
 
 
