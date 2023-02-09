@@ -25,7 +25,7 @@ class MyGUI:
 
         self.root = root
         self.root.title("ChatGPT")
-        self.root.geometry("1000x1250")
+        self.root.geometry("1000x1400")
         self.root.config(background=BG_COLOR)
         self.root.resizable(True, False)
 
@@ -33,12 +33,20 @@ class MyGUI:
 
         def getModel():
             return selected_model.get()
+        
+        def getTemperature():
+            return temperatureSlider.get()
+        
+        def getTopP():
+            return topPSlider.get()
+        
+        def getLanguage():
+            return languageComboCox.get()
 
         def getPrompt():
             prompt = e.get()
-            print(prompt)
 
-            response = str(printGeneratedText(generateResponse("Croatian: " + prompt, getModel())))
+            response = str(printGeneratedText(generateResponse("In " + getLanguage() + ": " + prompt, getModel(), getTemperature(), getTopP())))
             copyLastResponse(response)
 
             txt.insert(tk.END, "Human: " + prompt + "\n")
@@ -54,76 +62,57 @@ class MyGUI:
             print(response)
 
         #All widgets
-        
-        # label
+        # combobox for different models
         label = tk.Label(text="Please select a model:", bg=BG_COLOR, fg=TEXT_COLOR)
         label.pack(fill=tk.X, padx=5, pady=5)
 
-        # combobox
         selected_model = tk.StringVar()
         models = ttk.Combobox(self.root, textvariable=selected_model)
         models['values'] = ("text-davinci-003", "text-curie-001", "code-davinci-002", "code-cushman-001")
         models['state'] = 'readonly'
+        models.current(0)
         models.pack(fill=tk.X, padx=5, pady=5)
 
-        # frame with a label for display
+        # label for display
         txt = tk.Text(self.root, bg=BG_COLOR, fg=TEXT_COLOR, font=FONT, width=60)
         txt.pack(fill=tk.X, padx=5, pady=5)
 
-        # frame for input and btn
+        # input and btn
         e = tk.Entry(self.root, bg="#2C3E50", fg=TEXT_COLOR, font=FONT, width=55)
         e.pack(fill=tk.X, padx=5, pady=5)
 
         promptBtn = tk.Button(self.root, text="Send", font=FONT_BOLD, bg=BG_GRAY, command=getPrompt).pack(fill=tk.X, padx=5, pady=5)
 
-        # progress bar 
+        # frame for controls
+        buttonControlFrame = tk.Frame(self.root)
+        buttonControlFrame.pack()
 
-        # more btn controls
-        frameControlBtn=tk.Frame(self.root,width=1000,height=20,bg='green')
-        frameControlBtn.pack(side="left")
+        # frame for temperature slider
+        temperatureFrame = tk.Frame(buttonControlFrame)
+        temperatureFrame.pack()
+        # temperature slider
+        temperatureSliderLabel = tk.Label(temperatureFrame, text="Temperature Slider (0-2)").pack()
+        temperatureSlider = tk.Scale(temperatureFrame, from_=0, to=2, length=400, digits=2, resolution = 0.1, orient="horizontal")
+        temperatureSlider.set(1)
+        temperatureSlider.pack()
 
-        #get API button
-        apiKeyBtn=tk.Button(frameControlBtn,text='API KEY', command=self.getAPI)
-        apiKeyBtn.pack(side='left')
-        #copy Response button
-        copyResponseBtn = tk.Button(frameControlBtn, text="Copy Response", command=copyLastResponse)
-        copyResponseBtn.pack(side="right")
-        #some kind of slider for temperature, top-p and token values
+        # frame for top-p
+        topPFrame = tk.Frame(buttonControlFrame)
+        topPFrame.pack()
+        # top-p and token values
+        topPSliderLabel = tk.Label(topPFrame, text="Top -P Slider (0-1)").pack()
+        topPSlider = tk.Scale(topPFrame, from_=0, to=1, length=400, digits=2, resolution = 0.1, orient="horizontal")
+        topPSlider.set(1)
+        topPSlider.pack()
 
         #differnet language options?
-
-    
-    # functions for api window - does not work!!!
-
-    def getAPI(self):
-        def save_callback(e):
-            print("Saved:", e.get())
-            # if credidentials.py exists then check if the api key is there if not make the file and save the input string as the new key
-
-        def cancel_callback():
-            promptWindow.destroy()
-
-        promptWindow = tk.Toplevel(self.root)
-        promptWindow.title("Insert API_KEY")
-
-        label = tk.Label(promptWindow, text="Enter a string:")
-        label.pack(pady=10)
-
-        entry = tk.Entry(promptWindow)
-        entry.pack(pady=10)
-
-        save_button = tk.Button(promptWindow, text="Save", command=save_callback(entry))
-        save_button.pack(side="left", padx=10)
-
-        cancel_button = tk.Button(promptWindow, text="Cancel", command=cancel_callback)
-        cancel_button.pack(side="right", padx=10)
-
-        promptWindow.protocol("WM_DELETE_WINDOW", cancel_callback)
-        promptWindow.mainloop()
-
-        
-
-
+        languageFrame = tk.Frame(self.root).pack()
+        selected_lang_model = tk.StringVar()
+        languageComboCox = ttk.Combobox(languageFrame, textvariable=selected_lang_model)
+        languageComboCox['values'] = ("English", "German", "French", "Croatian")
+        languageComboCox['state'] = 'readonly'
+        languageComboCox.current(0)
+        languageComboCox.pack()
         
 
     
@@ -134,11 +123,17 @@ class MyGUI:
 openai.api_key = constants.API_KEY
 
 # Use the completions API to generate text from GPT-3
-def generateResponse(prompt, model):
+def generateResponse(prompt, model, temperature, top_p):
+    print("Your Prompt: "+ prompt + "\n")
+    print("engine: " + model + "\n")
+    print("temperature: " + str(temperature) + "\n")
+    print("top-p: " + str(top_p) + "\n")
     response = openai.Completion.create(
         engine=model,
         prompt=prompt,
-        max_tokens=2048
+        max_tokens=2048,
+        temperature = temperature,
+        top_p = top_p,
     )
     return response
 
